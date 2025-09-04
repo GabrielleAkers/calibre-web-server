@@ -3,4 +3,4 @@ All the files necessary to run a self hosted [calbre-web-automated](https://gith
 
 I currently run this on an ubuntu instance hosted by hetzner.
 
-Change the file [template.env](./template.env) to `.env` and fill in the values then deploy everything to your server and run `docker compose up -d` to start the containers.
+Rename the file [template.env](./template.env) to `.env` and fill in the values then deploy everything to your server and run `docker compose up -d` to start the containers.
