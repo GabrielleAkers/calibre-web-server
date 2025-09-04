@@ -1,0 +1,64 @@
+services:
+    proxy:
+        env_file: ./.env
+        container_name: nginx
+        build:
+            context: ./nginx
+            dockerfile: nginx.Dockerfile
+            no_cache: true  # no_cache and delete + remake the default dirs for nginx fixes COPY not working i have no idea why i spent 2 hours on itc
+        ports:
+            - "443:443"
+            - "80:80"
+        networks:
+            - calibre
+            - default
+        volumes:
+            - nginx_logs:/var/log/nginx
+            - nginx_config:/etc/nginx
+            - ${SSL_PATH}:/etc/nginx/certs
+        restart: unless-stopped
+        deploy: 
+            restart_policy:
+                condition: "on-failure"
+                delay: 5s
+                max_attempts: 3
+                window: 120s
+    calibre-web:
+        image: crocodilestick/calibre-web-automated:dev
+        container_name: calibre-web
+        hostname: calibreweb
+        env_file: ./.env
+        environment:
+            - PUID=1000
+            - PGID=1000
+            - TZ=Etc/UTC
+            - CWA_PORT_OVERRIDE=${WEB_PORT}
+            - DOCKER_MODS=linuxserver/mods:universal-calibre #optional
+            - OAUTHLIB_RELAX_TOKEN_SCOPE=1 #optional
+        ports:
+            - "${WEB_PORT}:${WEB_PORT}"
+        networks:
+            - calibre
+            - default
+        volumes:
+            - ${CALIBRE_LIBRARY_PATH}:/calibre-library:z
+            - ${CALIBRE_CONFIG_PATH}:/config:z
+            - ${CALIBRE_INGEST_PATH}:/cwa-book-ingest
+            - ${CALIBRE_PLUGINS_PATH}:/config/.config/calibre/plugins
+            - type: bind
+              source: ${CALIBRE_GMAIL_FILE}
+              target: /app/calibre-web/gmail.json
+        restart: unless-stopped
+        deploy: 
+            restart_policy:
+                condition: "on-failure"
+                delay: 5s
+                max_attempts: 3
+                window: 120s
+        stdin_open: true
+        tty: true
+networks:
+  calibre:
+volumes:
+    nginx_logs:
+    nginx_config:
